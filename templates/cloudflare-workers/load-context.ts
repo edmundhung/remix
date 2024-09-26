@@ -1,13 +1,18 @@
 import { type PlatformProxy } from "wrangler";
 
-// PlatformProxy’s caches property is incompatible with the caches global
-// https://github.com/cloudflare/workers-sdk/blob/main/packages/wrangler/src/api/integrations/platform/caches.ts
-type Cloudflare = Omit<PlatformProxy<Env>, "dispose" | "caches"> & {
-  caches: CacheStorage;
-};
+type GetLoadContextArgs = {
+  request: Request;
+  context: {
+    cloudflare: Omit<PlatformProxy<Env, IncomingRequestCfProperties>, "dispose" | "caches">;
+  };
+}
 
 declare module "@remix-run/cloudflare" {
-  interface AppLoadContext {
-    cloudflare: Cloudflare;
+  interface AppLoadContext extends ReturnType<typeof getLoadContext> {
+    // This will merge the result of `getLoadContext` into the `AppLoadContext`
   }
+}
+
+export function getLoadContext({ context }: GetLoadContextArgs) {
+  return context;
 }
